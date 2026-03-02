@@ -1,6 +1,6 @@
 // ============================================================================
 // beamformer_apply_tb.v — Testbench for beamformer_apply
-// ----------------------------------------------------------------------------
+// 
 // TEST 1: Known weights + known signal → check Y(k) value
 //   weights = [0.25, 0.25, 0.25, 0.25] (Q1.15 = 8192)
 //   signal  = all mics see same tone: x0=x1=x2=x3 = (16384 + j0) = 0.5
@@ -20,7 +20,7 @@
 
 module beamformer_apply_tb;
 
-localparam DW    = 16;
+localparam DW = 16;
 localparam CLK_P = 10;
 
 reg clk, rst_n;
@@ -28,17 +28,17 @@ reg clk, rst_n;
 // Weight port
 reg signed [DW-1:0] w0_re,w0_im,w1_re,w1_im,w2_re,w2_im,w3_re,w3_im;
 reg [7:0]  w_bin;
-reg        w_valid;
+reg w_valid;
 
 // FFT port
 reg signed [DW-1:0] x0_re,x0_im,x1_re,x1_im,x2_re,x2_im,x3_re,x3_im;
 reg [7:0]  x_bin;
-reg        x_valid;
+reg x_valid;
 
 // Output
 wire signed [DW-1:0] y_re, y_im;
 wire [7:0]  y_bin;
-wire        y_valid;
+wire y_valid;
 
 beamformer_apply #(.NBINS(129), .DW(DW)) dut (
     .clk(clk), .rst_n(rst_n),
@@ -130,24 +130,24 @@ initial begin
     check_val(y_re, 16'sd16384, 200, "y_re");
     check_val(y_im, 16'sd0,      50, "y_im");
 
-    // ------------------------------------------------------------------
+    
     // TEST 2: Noise rejection — out-of-phase signal cancels
     // x = [1, -1, 1, -1] * 0.5 in Q1.15
     // Y_re = 0.25*(0.5 - 0.5 + 0.5 - 0.5) = 0
-    // ------------------------------------------------------------------
+    
     $display("\nTest 2: Out-of-phase signal (should cancel)");
     send_weights(16'sd8192, 16'sd0, 8'd10);
     send_bins_and_wait(16384,0, -16384,0, 16384,0, -16384,0, 8'd10);
     check_val(y_re, 16'sd0, 50, "y_re");
     check_val(y_im, 16'sd0, 50, "y_im");
 
-    // ------------------------------------------------------------------
+    
     // TEST 3: Complex weights, complex signal
     // w = [0.25+0.25j] all mics (Q1.15: 8192)
     // x = [1+0j] all mics (Q1.15: 32767)
     // w^H·x = (0.25-0.25j)*1 * 4 = 1.0 - 1.0j → clipped to 32767
     // y_re = 32767, y_im = -32767 (within tolerance of 32767)
-    // ------------------------------------------------------------------
+    
     $display("\nTest 3: Complex weights");
     @(negedge clk);
     w0_re=8192;w0_im=8192; w1_re=8192;w1_im=8192;
@@ -158,9 +158,9 @@ initial begin
     check_val(y_re,  16'sd32767, 200, "y_re");
     check_val(y_im, -16'sd32767, 200, "y_im");
 
-    // ------------------------------------------------------------------
+    
     // TEST 4: Bin index passes through
-    // ------------------------------------------------------------------
+    
     $display("\nTest 4: Bin index passthrough");
     send_weights(16'sd8192, 16'sd0, 8'd42);
     send_bins_and_wait(0,0,0,0,0,0,0,0, 8'd42);

@@ -1,6 +1,6 @@
 // ============================================================================
 // beamformer_apply.v  —  Apply MVDR weights to FFT bins
-// ----------------------------------------------------------------------------
+// 
 // Computes: Y(k) = w^H(k) · X(k)
 //   = w0*·x0 + w1*·x1 + w2*·x2 + w3*·x3
 //
@@ -27,7 +27,7 @@
 
 module beamformer_apply #(
     parameter NBINS = 129,
-    parameter DW    = 16
+    parameter DW = 16
 )(
     input  wire clk,
     input  wire rst_n,
@@ -38,7 +38,7 @@ module beamformer_apply #(
     input  wire signed [DW-1:0] w2_re, w2_im,
     input  wire signed [DW-1:0] w3_re, w3_im,
     input  wire [7:0]  w_bin,
-    input  wire        w_valid,
+    input  wire w_valid,
 
     // FFT bin input (4 mics in parallel, same bin same cycle)
     input  wire signed [DW-1:0] x0_re, x0_im,
@@ -46,13 +46,13 @@ module beamformer_apply #(
     input  wire signed [DW-1:0] x2_re, x2_im,
     input  wire signed [DW-1:0] x3_re, x3_im,
     input  wire [7:0]  x_bin,
-    input  wire        x_valid,
+    input  wire x_valid,
 
     // Beamformed output
     output reg  signed [DW-1:0] y_re,
     output reg  signed [DW-1:0] y_im,
     output reg  [7:0]  y_bin,
-    output reg         y_valid
+    output reg y_valid
 );
 
 // ============================================================================
@@ -125,12 +125,12 @@ end
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         y_valid <= 0;
-        y_re    <= 0;
-        y_im    <= 0;
-        y_bin   <= 0;
+        y_re <= 0;
+        y_im <= 0;
+        y_bin <= 0;
     end else begin
         y_valid <= s1_valid;
-        y_bin   <= s1_bin;
+        y_bin <= s1_bin;
 
         if (s1_valid) begin
             begin : dotprod
