@@ -29,7 +29,7 @@
 module i2s_master_clk #(
     parameter SYS_CLK_FREQ = 100_000_000,  // System clock frequency (Hz)
     parameter BCLK_FREQ = 1_024_000,    // Target BCLK frequency (Hz)
-    parameter BITS_PER_CH = 32;            // Bits per channel (32 = standard)
+    parameter BITS_PER_CH = 32            // Bits per channel (32 = standard)
 )(
     input wire clk,      // System clock
     input wire rst_n,
