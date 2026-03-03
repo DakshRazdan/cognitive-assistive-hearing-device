@@ -11,7 +11,7 @@ module covariance_est #(
     parameter NBINS = 129,
     parameter NMICS = 4,
     parameter DW = 16,
-    parameter signed [15:0] ALPHA = 16'd31129;
+    parameter signed [15:0] ALPHA = 16'd31129
 )(
     input  wire clk,
     input  wire rst_n,
