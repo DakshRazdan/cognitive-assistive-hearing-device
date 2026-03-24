@@ -1,7 +1,5 @@
-// ============================================================================
-// top_level.v -- MVDR Beamformer Top Level
-// ============================================================================
 
+// top_level.v -- MVDR Beamformer Top Level
 `timescale 1ns/1ps
 
 module top_level (
@@ -20,18 +18,18 @@ localparam N = 256;
 localparam NBINS = 129;   // bins 0..128
 localparam DW = 16;
 
-// ============================================================================
+
 // I2S CLOCK GENERATOR
-// ============================================================================
+
 wire mclk_unused;
 i2s_master_clk clk_gen (
     .clk(clk), .rst_n(rst_n),
     .bclk(bclk), .ws(ws), .mclk(mclk_unused)
 );
 
-// ============================================================================
+
 // I2S RECEIVERS
-// ============================================================================
+
 wire [23:0] mic0_raw, mic1_raw, mic2_raw, mic3_raw;
 wire i2s_valid_01, i2s_valid_23;
 
@@ -44,9 +42,9 @@ i2s_rx rx_23 (
     .left_out(mic2_raw), .right_out(mic3_raw), .valid(i2s_valid_23)
 );
 
-// ============================================================================
+
 // CIC DECIMATORS x4
-// ============================================================================
+
 wire [15:0] cic0_out, cic1_out, cic2_out, cic3_out;
 wire cic0_valid, cic1_valid, cic2_valid, cic3_valid;
 
@@ -55,9 +53,9 @@ cic_decimator cic1 (.clk(clk),.rst_n(rst_n),.x_in(mic1_raw),.x_valid(i2s_valid_0
 cic_decimator cic2 (.clk(clk),.rst_n(rst_n),.x_in(mic2_raw),.x_valid(i2s_valid_23),.y_out(cic2_out),.y_valid(cic2_valid));
 cic_decimator cic3 (.clk(clk),.rst_n(rst_n),.x_in(mic3_raw),.x_valid(i2s_valid_23),.y_out(cic3_out),.y_valid(cic3_valid));
 
-// ============================================================================
+
 // HANN WINDOW ROM (analysis window, applied before FFT)
-// ============================================================================
+
 reg signed [DW-1:0] hann_rom [0:N-1];
 integer hw;
 initial begin
@@ -86,9 +84,9 @@ always @(posedge clk or negedge rst_n) begin
     end
 end
 
-// ============================================================================
+
 // FFT x4
-// ============================================================================
+
 wire signed [DW-1:0] fft0_re, fft0_im, fft1_re, fft1_im;
 wire signed [DW-1:0] fft2_re, fft2_im, fft3_re, fft3_im;
 wire fft0_valid, fft0_last;
@@ -99,9 +97,9 @@ fft_r2dit fft1 (.clk(clk),.rst_n(rst_n),.x_re(win1),.x_valid(fft_valid),.y_re(ff
 fft_r2dit fft2 (.clk(clk),.rst_n(rst_n),.x_re(win2),.x_valid(fft_valid),.y_re(fft2_re),.y_im(fft2_im),.y_valid(fft2_valid),.y_last(fft2_last));
 fft_r2dit fft3 (.clk(clk),.rst_n(rst_n),.x_re(win3),.x_valid(fft_valid),.y_re(fft3_re),.y_im(fft3_im),.y_valid(fft3_valid),.y_last(fft3_last));
 
-// ============================================================================
+
 // BIN COUNTER -- track which bin FFT is outputting
-// ============================================================================
+
 reg [7:0] bin_cnt;
 reg bin_valid;  // only bins 0..128
 
@@ -118,9 +116,9 @@ always @(posedge clk or negedge rst_n) begin
     end
 end
 
-// ============================================================================
+
 // COVARIANCE ESTIMATOR
-// ============================================================================
+
 wire [7:0] cov_rd_bin;
 wire [3:0] cov_rd_elem;
 wire cov_rd_en;
@@ -138,10 +136,7 @@ covariance_est cov (
     .rd_re(cov_rd_re),   .rd_im(cov_rd_im),     .rd_valid(cov_rd_valid)
 );
 
-// ============================================================================
-// MVDR WEIGHT SEQUENCER
-// Triggers weight computation for each bin after FFT frame completes
-// ============================================================================
+// MVDR WEIGHT SEQUENCER 
 reg [7:0] wgt_bin;
 reg wgt_compute;
 reg wgt_busy;
@@ -178,9 +173,9 @@ always @(posedge clk or negedge rst_n) begin
     end
 end
 
-// ============================================================================
+
 // BEAMFORMER APPLY
-// ============================================================================
+
 wire signed [DW-1:0] bf_re, bf_im;
 wire [7:0] bf_bin;
 wire bf_valid;
@@ -196,15 +191,10 @@ beamformer_apply bf (
     .y_re(bf_re), .y_im(bf_im), .y_bin(bf_bin), .y_valid(bf_valid)
 );
 
-// ============================================================================
+
 // BEAMFORMED BIN BUFFER
-// Problem: bf_valid fires bins 0..128 spread over ~130 cycles.
-// IFFT needs all 256 bins in one back-to-back burst.
-// Solution: store bins 0..128 as they arrive, then burst all 256 bins
-//           (0..128 from buffer, 129..255 as conjugate mirror of 127..1).
-//
-// Buffer size: 129 entries x 2 x 16-bit = 4128 bits (~0.5 BRAM)
-// ============================================================================
+
+
 reg signed [DW-1:0] bin_buf_re [0:NBINS-1];  // bins 0..128
 reg signed [DW-1:0] bin_buf_im [0:NBINS-1];
 
@@ -246,11 +236,7 @@ always @(posedge clk or negedge rst_n) begin
 end
 
 // IFFT input mux: bins 0..128 from buffer, bins 129..255 conjugate mirror
-// bin k (129..255) mirrors bin (256-k):
-//   k=129 -> mirror of bin 127
-//   k=255 -> mirror of bin 1
-//   k=128 is Nyquist -> real, no mirror needed (already in buf as bin 128)
-// Bit-reversal LUT for IFFT DIT input ordering
+
 reg [7:0] bit_rev_lut [0:255];
 integer brl;
 initial begin
@@ -278,9 +264,8 @@ wire signed [DW-1:0] ifft_x_im = (iburst_cnt <= 128) ?
                                 bin_buf_im[nat_bin] :
                                 -bin_buf_im[mirror_idx];
 
-// ============================================================================
 // IFFT
-// ============================================================================
+
 wire signed [DW-1:0] ifft_re, ifft_im;
 wire ifft_valid, ifft_last;
 
@@ -292,9 +277,9 @@ ifft_r2dit ifft0 (
     .y_valid(ifft_valid), .y_last(ifft_last)
 );
 
-// ============================================================================
+
 // OVERLAP-ADD -> PCM OUTPUT
-// ============================================================================
+
 overlap_add ola (
     .clk(clk), .rst_n(rst_n),
     .x_re(ifft_re), .x_valid(ifft_valid), .x_last(ifft_last),
