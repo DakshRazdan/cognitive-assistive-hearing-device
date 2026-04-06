@@ -1,26 +1,38 @@
+// ============================================================================
 // spectral_sub.v — Spectral Subtraction Noise Reduction
-
+// ----------------------------------------------------------------------------
+// Uses FFT magnitude subtraction:
+//   |Y(k)| = max(|X(k)| - alpha*|N(k)|, beta*|X(k)|)
+// alpha = over-subtraction = 1.5 (Q1.15: 49152 = 1.5*32768 — use 32-bit)
+// beta  = spectral floor   = 0.01 (Q1.15: 328)
+//
+// Noise PSD estimated during speech=0 frames
+// Phase preserved from input
+//
+// INPUT:  FFT bins from beamformer (re+im per bin, 129 bins)
+// OUTPUT: cleaned FFT bins (re+im per bin)
+// ============================================================================
 `timescale 1ns/1ps
 
 module spectral_sub #(
     parameter NBINS = 129,
-    parameter DW = 16
+    parameter DW    = 16
 )(
-    input wire clk,
-    input wire rst_n,
-    input wire signed [DW-1:0] x_re,
-    input wire signed [DW-1:0] x_im,
-    input wire [7:0] x_bin,
-    input wire x_valid,
-    input wire speech,
-    output reg signed [DW-1:0]  y_re,
-    output reg signed [DW-1:0]  y_im,
-    output reg [7:0] y_bin,
-    output reg y_valid
+    input  wire                  clk,
+    input  wire                  rst_n,
+    input  wire signed [DW-1:0]  x_re,
+    input  wire signed [DW-1:0]  x_im,
+    input  wire [7:0]             x_bin,
+    input  wire                  x_valid,
+    input  wire                  speech,
+    output reg  signed [DW-1:0]  y_re,
+    output reg  signed [DW-1:0]  y_im,
+    output reg  [7:0]             y_bin,
+    output reg                   y_valid
 );
 
 // Noise PSD estimate per bin (magnitude, Q1.15)
-reg [DW-1:0] noise_mag [0:NBINS-1];
+(* ramstyle = "M9K" *) reg [DW-1:0] noise_mag [0:NBINS-1];
 // Frame count for averaging
 reg [7:0] noise_frames;
 
@@ -32,9 +44,9 @@ initial begin
 end
 
 // Magnitude computation: approx sqrt(re^2+im^2) using max+min/2
-wire [31:0] re2 = ($signed(x_re) * $signed(x_re)) >>> 15;
-wire [31:0] im2 = ($signed(x_im) * $signed(x_im)) >>> 15;
-wire [31:0] mag2 = re2 + im2;
+wire [31:0] re2     = ($signed(x_re) * $signed(x_re)) >>> 15;
+wire [31:0] im2     = ($signed(x_im) * $signed(x_im)) >>> 15;
+wire [31:0] mag2    = re2 + im2;
 // Integer sqrt approximation: mag ~ (max + min*0.5)
 wire [DW-1:0] abs_re = x_re[DW-1] ? -x_re : x_re;
 wire [DW-1:0] abs_im = x_im[DW-1] ? -x_im : x_im;
@@ -76,7 +88,7 @@ always @(posedge clk or negedge rst_n) begin
                 mag_floor = ($signed(BETA) * $signed(mag_approx)) >>> 15;
                 // subtracted magnitude
                 mag_sub = (mag_approx > sub_val[15:0]) ?
-                        (mag_approx - sub_val[15:0]) : mag_floor;
+                          (mag_approx - sub_val[15:0]) : mag_floor;
                 if (mag_sub < mag_floor) mag_sub = mag_floor;
 
                 // Scale re and im by mag_sub/mag_approx to preserve phase
