@@ -37,8 +37,8 @@ module covariance_est #(
 // RAM: 2064 entries
 localparam RAM_DEPTH = 2064;
 
-reg signed [DW-1:0] cov_re [0:RAM_DEPTH-1];
-reg signed [DW-1:0] cov_im [0:RAM_DEPTH-1];
+(* ramstyle = "M9K" *) reg signed [DW-1:0] cov_re [0:RAM_DEPTH-1];
+(* ramstyle = "M9K" *) reg signed [DW-1:0] cov_im [0:RAM_DEPTH-1];
 
 integer init_i;
 initial begin
