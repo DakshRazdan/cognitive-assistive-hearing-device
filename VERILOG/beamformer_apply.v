@@ -59,14 +59,14 @@ module beamformer_apply #(
 // WEIGHT RAM — 8 separate 1D arrays, one per component
 // Avoids iverilog 2D array variable-index read bug (returns silent 0)
 // ============================================================================
-reg signed [DW-1:0] ram_w0r [0:NBINS-1];
-reg signed [DW-1:0] ram_w0i [0:NBINS-1];
-reg signed [DW-1:0] ram_w1r [0:NBINS-1];
-reg signed [DW-1:0] ram_w1i [0:NBINS-1];
-reg signed [DW-1:0] ram_w2r [0:NBINS-1];
-reg signed [DW-1:0] ram_w2i [0:NBINS-1];
-reg signed [DW-1:0] ram_w3r [0:NBINS-1];
-reg signed [DW-1:0] ram_w3i [0:NBINS-1];
+(* ramstyle = "M9K" *) reg signed [DW-1:0] ram_w0r [0:NBINS-1];
+(* ramstyle = "M9K" *) reg signed [DW-1:0] ram_w0i [0:NBINS-1];
+(* ramstyle = "M9K" *) reg signed [DW-1:0] ram_w1r [0:NBINS-1];
+(* ramstyle = "M9K" *) reg signed [DW-1:0] ram_w1i [0:NBINS-1];
+(* ramstyle = "M9K" *) reg signed [DW-1:0] ram_w2r [0:NBINS-1];
+(* ramstyle = "M9K" *) reg signed [DW-1:0] ram_w2i [0:NBINS-1];
+(* ramstyle = "M9K" *) reg signed [DW-1:0] ram_w3r [0:NBINS-1];
+(* ramstyle = "M9K" *) reg signed [DW-1:0] ram_w3i [0:NBINS-1];
 
 // ============================================================================
 // WEIGHT WRITE — store on w_valid (single cycle, no FSM needed)
