@@ -1,27 +1,34 @@
-
+// ============================================================================
 // vad.v — Voice Activity Detection
-
+// ----------------------------------------------------------------------------
+// Frame length: 320 samples (20ms at 16kHz)
+// Frame shift:  128 samples (matches FPGA hop)
+// Energy threshold:  328  (Q1.15 = 0.01)
+// ZCR low:           655  (Q1.15 = 0.02)
+// ZCR high:         14746 (Q1.15 = 0.45)
+// Output: speech flag updated every 128 samples
+// ============================================================================
 `timescale 1ns/1ps
 
 module vad #(
-    parameter DW = 16,
+    parameter DW        = 16,
     parameter FRAME_LEN = 320,
-    parameter HOP = 128,
+    parameter HOP       = 128,
     parameter ENERGY_TH = 32'd328,
-    parameter ZCR_LOW = 32'd655,
-    parameter ZCR_HIGH = 32'd14746
+    parameter ZCR_LOW   = 32'd655,
+    parameter ZCR_HIGH  = 32'd14746
 )(
-    input wire clk,
-    input wire rst_n,
-    input wire signed [DW-1:0] pcm_in,
-    input wire pcm_valid,
-    output reg speech
+    input  wire                 clk,
+    input  wire                 rst_n,
+    input  wire signed [DW-1:0] pcm_in,
+    input  wire                 pcm_valid,
+    output reg                  speech
 );
 
-reg signed [DW-1:0] frame_buf [0:FRAME_LEN-1];
-reg [8:0] hop_cnt;
-reg [8:0] fill_cnt;
-reg buf_full;
+(* ramstyle = "M9K" *) reg signed [DW-1:0] frame_buf [0:FRAME_LEN-1];
+reg [8:0]  hop_cnt;
+reg [8:0]  fill_cnt;
+reg        buf_full;
 
 integer fi;
 initial begin
@@ -31,7 +38,7 @@ end
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
-        hop_cnt <= 0;
+        hop_cnt  <= 0;
         fill_cnt <= 0;
         buf_full <= 0;
     end else if (pcm_valid) begin
@@ -47,7 +54,7 @@ always @(posedge clk or negedge rst_n) begin
     end
 end
 
-reg [8:0] comp_cnt;
+reg [8:0]  comp_cnt;
 reg [31:0] energy_acc;
 reg [31:0] zcr_acc;
 reg signed [DW-1:0] prev_samp;
@@ -59,14 +66,14 @@ wire [31:0] samp_sq = ($signed(cur_samp) * $signed(cur_samp)) >>> 15;
 
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
-        comp_cnt <= 0; energy_acc <= 0;
-        zcr_acc <= 0; prev_samp <= 0;
-        computing <= 0; speech <= 0;
+        comp_cnt   <= 0; energy_acc <= 0;
+        zcr_acc    <= 0; prev_samp  <= 0;
+        computing  <= 0; speech     <= 0;
     end else begin
         if (pcm_valid && buf_full && hop_cnt == HOP-1) begin
-            computing <= 1; comp_cnt <= 0;
-            energy_acc <= 0; zcr_acc <= 0;
-            prev_samp <= frame_buf[0];
+            computing  <= 1; comp_cnt  <= 0;
+            energy_acc <= 0; zcr_acc   <= 0;
+            prev_samp  <= frame_buf[0];
         end
         if (computing) begin
             energy_acc <= energy_acc + samp_sq;
